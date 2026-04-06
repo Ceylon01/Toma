@@ -1,11 +1,20 @@
 package com.capstone.toma.ui.theme
 
-import androidx.compose.ui.graphics.Color
+import com.capstone.toma.ui.TomaBrown
+import com.capstone.toma.ui.TomaCard
+import com.capstone.toma.ui.TomaCream
+import com.capstone.toma.ui.TomaGreen
+import com.capstone.toma.ui.TomaInk
+import com.capstone.toma.ui.TomaTomato
+import com.capstone.toma.ui.TomaTomatoDark
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val Purple80 = TomaTomato
+val PurpleGrey80 = TomaBrown
+val Pink80 = TomaGreen
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val Purple40 = TomaTomato
+val PurpleGrey40 = TomaBrown
+val Pink40 = TomaTomatoDark
+val SurfaceLight = TomaCard
+val BackgroundLight = TomaCream
+val OnSurfaceLight = TomaInk
