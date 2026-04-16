@@ -44,8 +44,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // ✅ 3. Vosk 모델 시작
-        voskManager.initModel()
+        // ✅ 3. Vosk 모델 시작 (기능 중지를 위해 주석 처리)
+        // voskManager.initModel()
 
         // 4. 메인 화면 띄우기
         setContent {
@@ -58,14 +58,14 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        voskManager.stopListening()
+        // voskManager.stopListening()
     }
 
     override fun onRestart() {
         super.onRestart()
-        if (!voskManager.isListening()) {
-            voskManager.startListening()
-        }
+        // if (!voskManager.isListening()) {
+        //     voskManager.startListening()
+        // }
     }
 
     override fun onDestroy() {
