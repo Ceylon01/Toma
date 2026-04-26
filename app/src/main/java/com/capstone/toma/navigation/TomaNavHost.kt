@@ -136,9 +136,9 @@ fun TomaNavHost(
                                     1. 인사말, 광고, 후기, 잡담은 모두 제외하세요.
                                     2. 반드시 '행동 중심의 단계별 가이드'로 재구성하세요.
                                     3. 재료, 도구, 시간 등 수치 정보는 원문에 있을 때만 정확히 기록하세요.
-                                    4. 분석 완료 문구: "분석을 완료했어요! [요리명] 레시피 안내를 시작할까요?"
-                                    5. 반드시 JSON 포함: { "type": "recipe_search", "keyword": "요리명" }
-                                    6. recipe_data 내에 "title", "category", "ingredients", "steps", "difficulty", "time", "servings", "image_url" 필드를 포함하세요.
+                                    4. recipe_data 내에 "title", "category", "ingredients", "steps", "difficulty", "time", "servings", "image_url" 필드를 포함하세요.
+                                    5. 위 필드가 모두 채워졌을 때만 type은 "recipe_search", recipe_complete는 true로 반환하세요.
+                                    6. 필수 필드가 부족하면 type은 "recipe_draft", recipe_complete는 false로 반환하고 missing_fields에 부족한 필드를 넣으세요.
                                     7. "image_url" 필드에는 위 '이미지 URL'을 넣으세요.
                                 """.trimIndent()
 
@@ -195,9 +195,9 @@ fun TomaNavHost(
             // VoiceViewModel에서 결과가 나오면 화면 이동
             LaunchedEffect(voiceResult) {
                 voiceResult?.let { result ->
-                    if (result.requestType == "recipe_search") {
-                        // 레시피 검색인 경우 바로 상세 화면으로 이동
-                        navController.navigate(TomaDestination.RecipeDetail.createRoute(result.keyword)) {
+                    if (result.requestType == "recipe_search" && result.recipeComplete && result.recipeData != null) {
+                        // 레시피 데이터가 완성된 경우 확인창으로 이동
+                        navController.navigate(TomaDestination.RecipeConfirm.createRoute(result.keyword, result.recipeData)) {
                             popUpTo(TomaDestination.VoiceGuide.route) { inclusive = true }
                         }
                     } else {

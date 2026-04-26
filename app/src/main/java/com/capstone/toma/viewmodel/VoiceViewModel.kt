@@ -153,7 +153,9 @@ class VoiceViewModel(application: Application) : AndroidViewModel(application) {
                         userQuery = text,
                         requestType = result.requestType,
                         keyword = result.keyword,
-                        responseMessage = result.responseMessage
+                        responseMessage = result.responseMessage,
+                        recipeData = result.recipeData,
+                        recipeComplete = result.recipeComplete
                     )
 
                     // Result 상태로 전환 (응답 메시지 표시)
@@ -207,5 +209,7 @@ data class SearchResultData(
     val userQuery: String,          // 사용자가 말한 원본 텍스트
     val requestType: String,        // "recipe_search", "menu_recommend" 등
     val keyword: String,            // 검색 키워드
-    val responseMessage: String     // AI 응답 메시지
+    val responseMessage: String,    // AI 응답 메시지
+    val recipeData: String? = null,
+    val recipeComplete: Boolean = false
 )

@@ -33,6 +33,16 @@ data class StoredRecipeEntity(
     val updatedAt: Long
 )
 
+@Entity(tableName = "recipe_drafts")
+data class RecipeDraftEntity(
+    @PrimaryKey val id: String,
+    val keyword: String,
+    val title: String,
+    val recipeDataJson: String,
+    val complete: Boolean,
+    val updatedAt: Long
+)
+
 class RecipeStorageConverters {
     @TypeConverter
     fun fromStringList(value: List<String>): String {
@@ -61,8 +71,8 @@ class RecipeStorageConverters {
 }
 
 @Database(
-    entities = [StoredRecipeEntity::class],
-    version = 3,
+    entities = [StoredRecipeEntity::class, RecipeDraftEntity::class],
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(RecipeStorageConverters::class)
@@ -79,6 +89,23 @@ abstract class RecipeStorageDatabase : RoomDatabase() {
             }
         }
 
+        private val Migration3To4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS recipe_drafts (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        keyword TEXT NOT NULL,
+                        title TEXT NOT NULL,
+                        recipeDataJson TEXT NOT NULL,
+                        complete INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun getInstance(context: Context): RecipeStorageDatabase {
             return instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -86,7 +113,7 @@ abstract class RecipeStorageDatabase : RoomDatabase() {
                     RecipeStorageDatabase::class.java,
                     "recipe-storage.db"
                 )
-                    .addMigrations(Migration2To3)
+                    .addMigrations(Migration2To3, Migration3To4)
                     .fallbackToDestructiveMigration(dropAllTables = true)
                     .build()
                     .also { instance = it }

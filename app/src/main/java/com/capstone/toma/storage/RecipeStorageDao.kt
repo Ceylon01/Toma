@@ -22,6 +22,9 @@ interface RecipeStorageDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(recipe: StoredRecipeEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertDraft(draft: RecipeDraftEntity)
+
     @Query("SELECT COUNT(*) FROM stored_recipes")
     suspend fun countRecipes(): Int
 

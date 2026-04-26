@@ -6,6 +6,7 @@ import com.capstone.toma.model.StoredRecipe
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import org.json.JSONObject
 
 class RecipeStorageRepository private constructor(
     private val dao: RecipeStorageDao
@@ -34,6 +35,21 @@ class RecipeStorageRepository private constructor(
         dao.upsert(recipe.toEntity())
     }
 
+    suspend fun saveRecipeDraft(keyword: String, recipeDataJson: String, complete: Boolean) {
+        val json = runCatching { JSONObject(recipeDataJson) }.getOrNull()
+        val title = json?.optString("title").orEmpty().ifBlank { keyword }
+        dao.upsertDraft(
+            RecipeDraftEntity(
+                id = generateDraftId(title.ifBlank { keyword }),
+                keyword = keyword,
+                title = title.ifBlank { "레시피 초안" },
+                recipeDataJson = recipeDataJson,
+                complete = complete,
+                updatedAt = System.currentTimeMillis()
+            )
+        )
+    }
+
     suspend fun deleteRecipe(recipeId: String) {
         dao.deleteById(recipeId)
     }
@@ -54,6 +70,10 @@ class RecipeStorageRepository private constructor(
             }
         }
     }
+}
+
+private fun generateDraftId(title: String): String {
+    return "draft_${title.hashCode()}"
 }
 
 private fun StoredRecipeEntity.toModel(): StoredRecipe = StoredRecipe(
