@@ -15,7 +15,7 @@ import com.capstone.toma.viewmodel.VoiceViewModel // ViewModel 위치 확인
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var voskManager: VoskManager
+    private var voskManager: VoskManager? = null
 
     // ✅ 1. ViewModel을 Activity 레벨에서 선언 (UI와 공유하기 위함)
     private val voiceViewModel: VoiceViewModel by viewModels()
@@ -63,18 +63,20 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        voskManager.stopListening()
+        voskManager?.stopListening()
     }
 
     override fun onRestart() {
         super.onRestart()
-        if (!voskManager.isListening()) {
-            voskManager.startListening()
+        val manager = voskManager ?: return
+        if (!manager.isListening()) {
+            manager.startListening()
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        voskManager.release()
+        voskManager?.release()
+        voskManager = null
     }
 }
