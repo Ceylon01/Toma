@@ -116,10 +116,13 @@ class OpenAiManager {
               "keyword": "결정된 요리 이름 또는 검색어",
               "response": "사용자에게 줄 대답",
               "recipe_data": {
+                "title": "요리명",
+                "category": "한식/중식/양식/일식/분식/디저트/음료/기타",
                 "ingredients": ["재료1 (용량)", "재료2 (용량)"],
                 "steps": ["1단계 설명", "2단계 설명"],
                 "difficulty": "쉬움/보통/어려움",
                 "time": "예상 소요 시간 (예: 20분)",
+                "servings": 2,
                 "image_url": "이미지 URL (있을 경우)"
               } (type이 recipe_search일 경우 반드시 포함)
             }
@@ -163,7 +166,7 @@ class OpenAiManager {
                             requestType = resultJson.optString("type", "chat"),
                             keyword = resultJson.optString("keyword", ""),
                             responseMessage = resultJson.optString("response", ""),
-                            recipeData = resultJson.optJSONObject("recipe_data")?.toString()
+                            recipeData = normalizeRecipeData(resultJson)
                         ))
                     } catch (e: Exception) {
                         onResult(VoiceRequestResult.Error("분석 오류가 발생했습니다."))
@@ -177,6 +180,15 @@ class OpenAiManager {
 
     fun processVoiceRequest(userText: String, onResult: (VoiceRequestResult) -> Unit) {
         processChatRequest(userText, emptyList(), onResult)
+    }
+
+    private fun normalizeRecipeData(resultJson: JSONObject): String? {
+        val recipeJson = resultJson.optJSONObject("recipe_data") ?: return null
+        val keyword = resultJson.optString("keyword", "")
+        if (recipeJson.optString("title").isBlank() && keyword.isNotBlank()) {
+            recipeJson.put("title", keyword)
+        }
+        return recipeJson.toString()
     }
 
     fun analyzeIntent(userText: String, onResult: (String?) -> Unit) {
@@ -243,10 +255,13 @@ class OpenAiManager {
                   "keyword": "요리명",
                   "response": "사진을 분석해보니 [요리명]이네요! 레시피를 바로 보여드릴까요?",
                   "recipe_data": {
+                    "title": "요리명",
+                    "category": "한식/중식/양식/일식/분식/디저트/음료/기타",
                     "ingredients": ["재료1 (용량)", "재료2 (용량)"],
                     "steps": ["1단계 설명", "2단계 설명"],
                     "difficulty": "쉬움/보통/어려움",
-                    "time": "소요 시간"
+                    "time": "소요 시간",
+                    "servings": 2
                   }
                 }
             """.trimIndent()
@@ -291,7 +306,7 @@ class OpenAiManager {
                                 requestType = resultJson.optString("type", "recipe_search"),
                                 keyword = resultJson.optString("keyword", "요리"),
                                 responseMessage = resultJson.optString("response", ""),
-                                recipeData = resultJson.optJSONObject("recipe_data")?.toString()
+                                recipeData = normalizeRecipeData(resultJson)
                             ))
                         } catch (e: Exception) {
                             if (continuation.isActive) continuation.resume(VoiceRequestResult.Error("결과 분석 실패: ${e.message}"))

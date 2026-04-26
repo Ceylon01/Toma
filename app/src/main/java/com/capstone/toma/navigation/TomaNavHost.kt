@@ -24,6 +24,7 @@ import com.capstone.toma.viewmodel.VoiceViewModel
 import com.capstone.toma.viewmodel.HomeViewModel
 import com.capstone.toma.viewmodel.ChatViewModel
 import com.capstone.toma.ui.screen.RecipeStorageScreen
+import com.capstone.toma.ui.screen.RecipeConfirmScreen
 import com.capstone.toma.ui.screen.RecipeDetailScreen
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
@@ -137,7 +138,8 @@ fun TomaNavHost(
                                     3. 재료, 도구, 시간 등 수치 정보는 원문에 있을 때만 정확히 기록하세요.
                                     4. 분석 완료 문구: "분석을 완료했어요! [요리명] 레시피 안내를 시작할까요?"
                                     5. 반드시 JSON 포함: { "type": "recipe_search", "keyword": "요리명" }
-                                    6. recipe_data 내에 "image_url" 필드를 추가하고 위 '이미지 URL'을 넣으세요.
+                                    6. recipe_data 내에 "title", "category", "ingredients", "steps", "difficulty", "time", "servings", "image_url" 필드를 포함하세요.
+                                    7. "image_url" 필드에는 위 '이미지 URL'을 넣으세요.
                                 """.trimIndent()
 
                                 val openAi = com.capstone.toma.OpenAiManager()
@@ -228,7 +230,7 @@ fun TomaNavHost(
             
             LaunchedEffect(navEvent) {
                 navEvent?.let { (keyword, recipeData) ->
-                    navController.navigate(TomaDestination.RecipeDetail.createRoute(keyword, recipeData))
+                    navController.navigate(TomaDestination.RecipeConfirm.createRoute(keyword, recipeData))
                     chatViewModel.clearNavigationEvent()
                 }
             }
@@ -277,6 +279,32 @@ fun TomaNavHost(
 
         composable(TomaDestination.ContactUs.route) {
             ContactUsScreen(onBackClick = { navController.popBackStack() })
+        }
+
+        composable(
+            route = TomaDestination.RecipeConfirm.route,
+            arguments = listOf(
+                navArgument("keyword") { type = NavType.StringType },
+                navArgument("recipeData") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val keyword = backStackEntry.arguments?.getString("keyword") ?: ""
+            val recipeData = backStackEntry.arguments?.getString("recipeData")
+            RecipeConfirmScreen(
+                keyword = keyword,
+                recipeDataJson = recipeData,
+                onBackClick = { navController.popBackStack() },
+                onConfirmClick = {
+                    navController.navigate(TomaDestination.RecipeDetail.createRoute(keyword, recipeData)) {
+                        popUpTo(TomaDestination.Chat.route) { inclusive = false }
+                    }
+                },
+                onRejectClick = { navController.popBackStack() }
+            )
         }
 
         composable(
