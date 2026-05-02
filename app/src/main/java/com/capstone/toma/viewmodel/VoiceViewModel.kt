@@ -6,7 +6,16 @@ import android.media.ToneGenerator
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.capstone.toma.*
+import com.capstone.toma.AudioStreamManager
+import com.capstone.toma.BuildConfig
+import com.capstone.toma.OpenAiRealtimeManager
+import com.capstone.toma.TimerManager
+import com.capstone.toma.TomaIntent
+import com.capstone.toma.TomaIntentParser
+import com.capstone.toma.VoiceUiState
+import com.capstone.toma.WakeWordManager
+import com.google.firebase.Firebase
+import com.google.firebase.storage.storage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -37,10 +46,92 @@ class VoiceViewModel(application: Application) : AndroidViewModel(application) {
         onError = { error -> _uiState.value = VoiceUiState.Error(error) }
     )
 
+    private var enrollmentCount = 0
+    private val TOTAL_ENROLLMENT_COUNT = 30
+
     init {
         audioStreamManager.startCapture()
         realtimeManager.connect()
         observeAudioStream()
+        observeEnrollmentStream()
+    }
+
+    private fun observeEnrollmentStream() {
+        viewModelScope.launch {
+            for (audioData in audioStreamManager.enrollmentChannel) {
+                if (_uiState.value is VoiceUiState.Enrolling) {
+                    uploadEnrollmentSample(audioData)
+                }
+            }
+        }
+    }
+
+    fun startEnrollment() {
+        enrollmentCount = 0
+        _uiState.value = VoiceUiState.Enrolling(0)
+        audioStreamManager.setEnrollmentMode(true)
+    }
+
+    private fun uploadEnrollmentSample(audioData: ByteArray) {
+        val nextCount = enrollmentCount + 1
+        val userId = "user_test_001" // TODO: Use real Auth ID
+        val fileName = "me_${String.format("%03d", nextCount)}.wav"
+        val storageRef = Firebase.storage.reference
+            .child("users/$userId/recordings/$fileName")
+
+        storageRef.putBytes(audioData)
+            .addOnSuccessListener {
+                enrollmentCount++
+                _uiState.value = VoiceUiState.Enrolling(enrollmentCount)
+                if (enrollmentCount >= TOTAL_ENROLLMENT_COUNT) {
+                    completeEnrollment()
+                }
+            }
+            .addOnFailureListener {
+                Log.e("VoiceViewModel", "Upload failed for $fileName: ${it.message}")
+            }
+    }
+
+    private fun completeEnrollment() {
+        audioStreamManager.setEnrollmentMode(false)
+        _uiState.value = VoiceUiState.Uploading
+        
+        // Polling for trained model (Simulation or actual backend check)
+        checkAndDownloadModel()
+    }
+
+    private fun checkAndDownloadModel() {
+        viewModelScope.launch {
+            _uiState.value = VoiceUiState.Training
+            val userId = "user_test_001"
+            val modelRef = Firebase.storage.reference.child("users/$userId/models/hey_toma.onnx")
+            
+            var modelDownloaded = false
+            var attempts = 0
+            while (!modelDownloaded && attempts < 60) { // Poll for 5 minutes (5s * 60)
+                delay(5000)
+                attempts++
+                
+                modelRef.getBytes(10 * 1024 * 1024) // Max 10MB
+                    .addOnSuccessListener { bytes ->
+                        wakeWordManager.updateClassifierModel(bytes)
+                        _uiState.value = VoiceUiState.Idle
+                        modelDownloaded = true
+                        Log.d("VoiceViewModel", "✅ Custom model downloaded and applied")
+                    }
+                    .addOnFailureListener {
+                        Log.d("VoiceViewModel", "Waiting for model... (Attempt $attempts)")
+                    }
+                
+                if (modelDownloaded) break
+            }
+            
+            if (!modelDownloaded) {
+                _uiState.value = VoiceUiState.Error("모델 학습 시간이 초과되었습니다. 나중에 다시 시도해주세요.")
+                delay(3000)
+                _uiState.value = VoiceUiState.Idle
+            }
+        }
     }
 
     private fun observeAudioStream() {

@@ -18,7 +18,19 @@ import androidx.navigation.NavType
 import com.capstone.toma.VoiceRequestResult
 import com.capstone.toma.TomaIntent
 import com.capstone.toma.WebPageManager
-import com.capstone.toma.ui.screen.*
+import com.capstone.toma.ui.screen.AiChatScreen
+import com.capstone.toma.ui.screen.ContactUsScreen
+import com.capstone.toma.ui.screen.CustomerCenterScreen
+import com.capstone.toma.ui.screen.EmailSettingScreen
+import com.capstone.toma.ui.screen.FirstLaunchIntroScreen
+import com.capstone.toma.ui.screen.PrivacyPolicyScreen
+import com.capstone.toma.ui.screen.PushSettingScreen
+import com.capstone.toma.ui.screen.RecipeDetailScreen
+import com.capstone.toma.ui.screen.RecipeStorageScreen
+import com.capstone.toma.ui.screen.SettingsScreen
+import com.capstone.toma.ui.screen.SpeakerEnrollmentScreen
+import com.capstone.toma.ui.screen.TomaHomeScreen
+import com.capstone.toma.ui.screen.VoiceGuideScreen
 import com.capstone.toma.viewmodel.VoiceViewModel
 import com.capstone.toma.viewmodel.HomeViewModel
 import com.capstone.toma.viewmodel.ChatViewModel
@@ -67,8 +79,21 @@ fun TomaNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = TomaDestination.Home.route
+        startDestination = TomaDestination.FirstLaunch.route
     ) {
+        composable(TomaDestination.FirstLaunch.route) {
+            FirstLaunchIntroScreen(
+                onStartEnrollment = {
+                    voiceViewModel.startEnrollment()
+                    navController.navigate(TomaDestination.SpeakerEnrollment.route)
+                },
+                onSkip = {
+                    navController.navigate(TomaDestination.Home.route) {
+                        popUpTo(TomaDestination.FirstLaunch.route) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(TomaDestination.Home.route) {
             TomaHomeScreen(
                 uiState = homeUiState,
@@ -174,6 +199,13 @@ fun TomaNavHost(
                 onSendMessage = chatViewModel::sendMessage,
                 onMicClick = { navController.navigate(TomaDestination.VoiceGuide.route) },
                 onErrorDismiss = chatViewModel::clearErrorEvent
+            )
+        }
+
+        composable(TomaDestination.SpeakerEnrollment.route) {
+            SpeakerEnrollmentScreen(
+                uiState = voiceUiState,
+                onCancel = { navController.popBackStack() }
             )
         }
 

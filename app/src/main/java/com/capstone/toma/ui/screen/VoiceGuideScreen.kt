@@ -50,6 +50,9 @@ fun VoiceGuideScreen(
         VoiceUiState.Recovering -> "RECOVERING"
         is VoiceUiState.Result -> "RESULT"
         is VoiceUiState.Error -> "ERROR"
+        is VoiceUiState.Enrolling -> "ENROLLING"
+        VoiceUiState.Uploading -> "UPLOADING"
+        VoiceUiState.Training -> "TRAINING"
     }
 
     val helperText = when (uiState) {
@@ -60,6 +63,9 @@ fun VoiceGuideScreen(
         VoiceUiState.Recovering -> "잠시 후 다시 시도할게요"
         is VoiceUiState.Result -> "인식된 요청을 확인해보세요"
         is VoiceUiState.Error -> "다시 한 번 말씀해 주세요"
+        is VoiceUiState.Enrolling -> "목소리를 등록하고 있어요"
+        VoiceUiState.Uploading -> "목소리 데이터를 서버로 전송 중입니다"
+        VoiceUiState.Training -> "나만의 모델을 만들고 있어요. 잠시만 기다려주세요"
     }
 
     Column(

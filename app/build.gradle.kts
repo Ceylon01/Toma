@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
 }
 
 // 1. local.properties에서 API 키 읽기
@@ -91,4 +92,8 @@ dependencies {
     // implementation("com.alphacephei:vosk-android:0.3.32")
 
     implementation("net.java.dev.jna:jna:5.2.0@aar")
+
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.storage)
 }

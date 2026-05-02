@@ -54,10 +54,34 @@ class WakeWordManager(
         try {
             melSession = ortEnv.createSession(context.assets.open("melspectrogram.onnx").readBytes())
             embSession = ortEnv.createSession(context.assets.open("embedding_model.onnx").readBytes())
-            clfSession = ortEnv.createSession(context.assets.open("hey_toma.onnx").readBytes())
-            Log.d(TAG, "✅ 3-Stage ONNX Models loaded successfully")
+            
+            // Try to load personalized model if exists, otherwise load default
+            val customModelFile = java.io.File(context.filesDir, "hey_toma_custom.onnx")
+            if (customModelFile.exists()) {
+                clfSession = ortEnv.createSession(customModelFile.readBytes())
+                Log.d(TAG, "✅ Personalized ONNX Model loaded")
+            } else {
+                clfSession = ortEnv.createSession(context.assets.open("hey_toma.onnx").readBytes())
+                Log.d(TAG, "✅ Default ONNX Model loaded")
+            }
         } catch (e: Exception) {
             Log.e(TAG, "❌ Model load failed: ${e.message}")
+        }
+    }
+
+    /**
+     * Dynamically update the classifier model (e.g., after fine-tuning)
+     */
+    fun updateClassifierModel(modelBytes: ByteArray) {
+        try {
+            clfSession?.close()
+            clfSession = ortEnv.createSession(modelBytes)
+            
+            // Save to internal storage for persistence
+            java.io.File(context.filesDir, "hey_toma_custom.onnx").writeBytes(modelBytes)
+            Log.d(TAG, "✅ Classifier model updated and persisted")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Failed to update classifier model: ${e.message}")
         }
     }
 
@@ -82,7 +106,8 @@ class WakeWordManager(
             val pcmTensor = OnnxTensor.createTensor(ortEnv, FloatBuffer.wrap(floatPcm), longArrayOf(1, CHUNK_SIZE.toLong()))
             
             pcmTensor.use {
-                val melOutput = melSession?.run(Collections.singletonMap("input", pcmTensor))
+                val inputName = melSession?.inputNames?.firstOrNull() ?: "input"
+                val melOutput = melSession?.run(Collections.singletonMap(inputName, pcmTensor))
                 melOutput?.use {
                     val melValue = it[0].value as Array<Array<Array<FloatArray>>>
                     val frames = melValue[0][0] // Shape: [1, 1, T, 32] -> frames is [T, 32]
@@ -97,7 +122,7 @@ class WakeWordManager(
                         }
                     }
 
-                    // Stride 8: Call embedding/classifier once per 80ms chunk (approx. 12.5Hz)
+                    // Call embedding/classifier once per 80ms chunk (approx. 12.5Hz)
                     if (melBuffer.size == MEL_WINDOW_SIZE) {
                         runEmbedding()
                     }
@@ -118,10 +143,15 @@ class WakeWordManager(
             val melInputTensor = OnnxTensor.createTensor(ortEnv, FloatBuffer.wrap(flattenedMel), longArrayOf(1, MEL_WINDOW_SIZE.toLong(), MEL_CHANNELS.toLong(), 1))
             
             melInputTensor.use {
-                val embOutput = embSession?.run(Collections.singletonMap("input", melInputTensor))
+                val inputName = embSession?.inputNames?.firstOrNull() ?: "input"
+                val embOutput = embSession?.run(Collections.singletonMap(inputName, melInputTensor))
                 embOutput?.use {
                     val embValue = it[0].value as Array<Array<Array<FloatArray>>>
                     val embedding = embValue[0][0][0] // [96]
+
+                    if (verboseLogging) {
+                        Log.d(TAG, "[Shape Check] Embedding Input: [1, $MEL_WINDOW_SIZE, $MEL_CHANNELS, 1], Output: [1, 1, 1, ${embedding.size}]")
+                    }
                     
                     embeddingBuffer.add(embedding)
                     if (embeddingBuffer.size > EMBEDDING_WINDOW_SIZE) {
@@ -148,12 +178,16 @@ class WakeWordManager(
             val clfInputTensor = OnnxTensor.createTensor(ortEnv, FloatBuffer.wrap(flattenedEmb), longArrayOf(1, EMBEDDING_WINDOW_SIZE.toLong(), EMBEDDING_DIM.toLong()))
             
             clfInputTensor.use {
-                val clfOutput = clfSession?.run(Collections.singletonMap("input", clfInputTensor))
+                val inputName = clfSession?.inputNames?.firstOrNull() ?: "input"
+                val clfOutput = clfSession?.run(Collections.singletonMap(inputName, clfInputTensor))
                 clfOutput?.use {
                     val scoreData = it[0].value as Array<FloatArray>
                     val score = scoreData[0][0]
                     
-                    if (verboseLogging) Log.v(TAG, "Current WakeWord Score: $score")
+                    if (verboseLogging) {
+                        Log.d(TAG, "[Shape Check] Classifier Input: [1, $EMBEDDING_WINDOW_SIZE, $EMBEDDING_DIM], Output: [1, 1]")
+                        Log.v(TAG, "Score: $score")
+                    }
                     
                     if (score >= detectionThreshold) {
                         Log.d(TAG, "🔥 [Hey Toma] DETECTED! Score: $score")

@@ -11,6 +11,8 @@ sealed class TomaDestination(val route: String) {
     object ContactUs : TomaDestination("contact_us")
     object PrivacyPolicy : TomaDestination("privacy_policy")
     object Chat : TomaDestination("ai_chat")
+    object SpeakerEnrollment : TomaDestination("speaker_enrollment")
+    object FirstLaunch : TomaDestination("first_launch")
     object RecipeDetail : TomaDestination("recipe_detail/{keyword}?recipeData={recipeData}") {
         fun createRoute(keyword: String, recipeData: String? = null): String {
             val encodedKeyword = android.net.Uri.encode(keyword)
