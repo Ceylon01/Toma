@@ -11,8 +11,6 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.capstone.toma.navigation.TomaNavHost
 import com.capstone.toma.ui.theme.TomaTheme
 import com.capstone.toma.viewmodel.VoiceViewModel
-import com.google.firebase.Firebase
-import com.google.firebase.storage.storage
 
 /**
  * CHANGED: openWakeWord migration - Swapped Vosk with new Audio & WakeWord logic

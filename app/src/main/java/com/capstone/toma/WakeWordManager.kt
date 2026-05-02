@@ -12,7 +12,8 @@ import ai.onnxruntime.OrtSession
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
-import java.util.*
+import java.util.Collections
+import java.util.LinkedList
 
 /**
  * Optimized openWakeWord 3-stage pipeline implementation.

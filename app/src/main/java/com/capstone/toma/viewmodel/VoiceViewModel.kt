@@ -48,6 +48,8 @@ class VoiceViewModel(application: Application) : AndroidViewModel(application) {
 
     private var enrollmentCount = 0
     private val TOTAL_ENROLLMENT_COUNT = 30
+    // TODO: Connect with FirebaseAuth.getInstance().currentUser?.uid
+    private val userId: String = "user_test_001"
 
     init {
         audioStreamManager.startCapture()
@@ -74,7 +76,6 @@ class VoiceViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun uploadEnrollmentSample(audioData: ByteArray) {
         val nextCount = enrollmentCount + 1
-        val userId = "user_test_001" // TODO: Use real Auth ID
         val fileName = "me_${String.format("%03d", nextCount)}.wav"
         val storageRef = Firebase.storage.reference
             .child("users/$userId/recordings/$fileName")
@@ -103,7 +104,6 @@ class VoiceViewModel(application: Application) : AndroidViewModel(application) {
     private fun checkAndDownloadModel() {
         viewModelScope.launch {
             _uiState.value = VoiceUiState.Training
-            val userId = "user_test_001"
             val modelRef = Firebase.storage.reference.child("users/$userId/models/hey_toma.onnx")
             
             var modelDownloaded = false
