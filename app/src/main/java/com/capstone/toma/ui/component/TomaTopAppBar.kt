@@ -22,7 +22,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.capstone.toma.R
-import com.capstone.toma.ui.theme.*
+import com.capstone.toma.ui.theme.TomaCard
+import com.capstone.toma.ui.theme.TomaMainOrange
+import com.capstone.toma.ui.theme.TomaPrimaryText
 
 @Composable
 fun TomaTopAppBar(
