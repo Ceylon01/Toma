@@ -97,39 +97,44 @@ class VoiceViewModel(application: Application) : AndroidViewModel(application) {
         audioStreamManager.setEnrollmentMode(false)
         _uiState.value = VoiceUiState.Uploading
         
-        // Polling for trained model (Simulation or actual backend check)
-        checkAndDownloadModel()
+        // Start polling for the trained model
+        startModelPolling(userId)
     }
 
-    private fun checkAndDownloadModel() {
+    /**
+     * Polls Firebase Storage for the personalized model and downloads it once available.
+     */
+    fun startModelPolling(userId: String) {
         viewModelScope.launch {
             _uiState.value = VoiceUiState.Training
             val modelRef = Firebase.storage.reference.child("users/$userId/models/hey_toma.onnx")
+            val localFile = java.io.File(getApplication<Application>().filesDir, "hey_toma_personal.onnx")
             
             var modelDownloaded = false
-            var attempts = 0
-            while (!modelDownloaded && attempts < 60) { // Poll for 5 minutes (5s * 60)
+            while (!modelDownloaded) {
                 delay(5000)
-                attempts++
                 
-                modelRef.getBytes(10 * 1024 * 1024) // Max 10MB
-                    .addOnSuccessListener { bytes ->
-                        wakeWordManager.updateClassifierModel(bytes)
-                        _uiState.value = VoiceUiState.Idle
-                        modelDownloaded = true
-                        Log.d("VoiceViewModel", "✅ Custom model downloaded and applied")
-                    }
-                    .addOnFailureListener {
-                        Log.d("VoiceViewModel", "Waiting for model... (Attempt $attempts)")
-                    }
+                try {
+                    // Check if file exists by attempting to get metadata or downloading
+                    modelRef.getFile(localFile)
+                        .addOnSuccessListener {
+                            wakeWordManager.loadPersonalModel(localFile.absolutePath)
+                            _uiState.value = VoiceUiState.Idle
+                            modelDownloaded = true
+                            Log.d("VoiceViewModel", "✅ Personal model downloaded and applied: ${localFile.absolutePath}")
+                            
+                            // Mark enrollment as complete in SharedPreferences
+                            val prefs = getApplication<Application>().getSharedPreferences("toma_prefs", android.content.Context.MODE_PRIVATE)
+                            prefs.edit().putBoolean("isEnrolled", true).apply()
+                        }
+                        .addOnFailureListener {
+                            Log.d("VoiceViewModel", "Waiting for model... ${it.message}")
+                        }
+                } catch (e: Exception) {
+                    Log.e("VoiceViewModel", "Polling error: ${e.message}")
+                }
                 
                 if (modelDownloaded) break
-            }
-            
-            if (!modelDownloaded) {
-                _uiState.value = VoiceUiState.Error("모델 학습 시간이 초과되었습니다. 나중에 다시 시도해주세요.")
-                delay(3000)
-                _uiState.value = VoiceUiState.Idle
             }
         }
     }

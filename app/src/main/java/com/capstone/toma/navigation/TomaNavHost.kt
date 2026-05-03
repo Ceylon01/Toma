@@ -17,6 +17,7 @@ import androidx.navigation.navArgument
 import androidx.navigation.NavType
 import com.capstone.toma.VoiceRequestResult
 import com.capstone.toma.TomaIntent
+import com.capstone.toma.VoiceUiState
 import com.capstone.toma.WebPageManager
 import com.capstone.toma.ui.screen.AiChatScreen
 import com.capstone.toma.ui.screen.ContactUsScreen
@@ -82,6 +83,14 @@ fun TomaNavHost(
         startDestination = TomaDestination.FirstLaunch.route
     ) {
         composable(TomaDestination.FirstLaunch.route) {
+            val prefs = LocalContext.current.getSharedPreferences("toma_prefs", android.content.Context.MODE_PRIVATE)
+            LaunchedEffect(Unit) {
+                if (prefs.getBoolean("isEnrolled", false)) {
+                    navController.navigate(TomaDestination.Home.route) {
+                        popUpTo(TomaDestination.FirstLaunch.route) { inclusive = true }
+                    }
+                }
+            }
             FirstLaunchIntroScreen(
                 onStartEnrollment = {
                     voiceViewModel.startEnrollment()
@@ -203,6 +212,15 @@ fun TomaNavHost(
         }
 
         composable(TomaDestination.SpeakerEnrollment.route) {
+            // 등록 완료 및 모델 학습 상태 진입 시 홈으로 이동
+            LaunchedEffect(voiceUiState) {
+                if (voiceUiState is VoiceUiState.Uploading || voiceUiState is VoiceUiState.Training) {
+                    // 업로드/학습 시작 시 사용자는 홈으로 보내고 백그라운드에서 폴링 진행
+                    navController.navigate(TomaDestination.Home.route) {
+                        popUpTo(TomaDestination.SpeakerEnrollment.route) { inclusive = true }
+                    }
+                }
+            }
             SpeakerEnrollmentScreen(
                 uiState = voiceUiState,
                 onCancel = { navController.popBackStack() }

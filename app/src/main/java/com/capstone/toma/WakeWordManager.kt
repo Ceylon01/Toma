@@ -86,6 +86,25 @@ class WakeWordManager(
         }
     }
 
+    /**
+     * Load a personal model from the given file path.
+     */
+    fun loadPersonalModel(path: String) {
+        try {
+            val modelFile = java.io.File(path)
+            if (!modelFile.exists()) {
+                Log.e(TAG, "❌ Personal model file not found at $path")
+                return
+            }
+            val modelBytes = modelFile.readBytes()
+            clfSession?.close()
+            clfSession = ortEnv.createSession(modelBytes)
+            Log.d(TAG, "✅ Personal model loaded: $path")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Failed to load personal model: ${e.message}")
+        }
+    }
+
     fun processFrame(pcmData: ByteArray) {
         if (melSession == null || embSession == null || clfSession == null) return
 
