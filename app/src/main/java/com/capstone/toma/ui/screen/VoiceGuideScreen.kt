@@ -128,7 +128,7 @@ fun VoiceGuideScreen(
             )
 
             // Debug Skip Button
-            if (BuildConfig.DEBUG) {
+            if (true) {
                 Spacer(modifier = Modifier.height(16.dp))
                 TextButton(
                     onClick = onMicClick,

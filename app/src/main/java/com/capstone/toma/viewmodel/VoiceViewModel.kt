@@ -33,6 +33,8 @@ import java.util.concurrent.TimeUnit
  * CHANGED: openWakeWord migration - Integrated State Machine & Realtime API
  */
 class VoiceViewModel(application: Application) : AndroidViewModel(application) {
+    private val WAKE_WORD_ENABLED = false
+
     // Enrollment Status
     sealed interface EnrollmentStatus {
         data object Idle : EnrollmentStatus
@@ -97,6 +99,7 @@ class VoiceViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun startWakeWord() {
+        if (!WAKE_WORD_ENABLED) return
         Log.d("VoiceViewModel", "Starting WakeWord sensing")
         viewModelScope.launch(Dispatchers.IO) {
             realtimeManager.connect()

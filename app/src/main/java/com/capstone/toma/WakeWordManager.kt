@@ -75,33 +75,35 @@ class WakeWordManager(
     }
 
     private fun loadModels() {
-        try {
-            // Load Base Models (Mel & Embedding) directly from assets as ByteArrays
-            melSession = ortEnv.createSession(context.assets.open("melspectrogram.onnx").readBytes())
-            embSession = ortEnv.createSession(context.assets.open("embedding_model.onnx").readBytes())
-            Log.d(TAG, "✅ Base models (Mel, Embedding) loaded from assets")
+        if (false) {
+            try {
+                // Load Base Models (Mel & Embedding) directly from assets as ByteArrays
+                melSession = ortEnv.createSession(context.assets.open("melspectrogram.onnx").readBytes())
+                embSession = ortEnv.createSession(context.assets.open("embedding_model.onnx").readBytes())
+                Log.d(TAG, "✅ Base models (Mel, Embedding) loaded from assets")
 
-            // Load Classifier Model (Check Personal first, then Default)
-            val personalWeights = File(context.filesDir, "personal_weights.bin")
-            if (personalWeights.exists()) {
-                if (personalizer.loadFromFile(personalWeights)) {
-                    useOnDevicePersonalizer = true
-                    Log.d(TAG, "✅ Existing on-device weights activated on startup")
+                // Load Classifier Model (Check Personal first, then Default)
+                val personalWeights = File(context.filesDir, "personal_weights.bin")
+                if (personalWeights.exists()) {
+                    if (personalizer.loadFromFile(personalWeights)) {
+                        useOnDevicePersonalizer = true
+                        Log.d(TAG, "✅ Existing on-device weights activated on startup")
+                    }
                 }
-            }
 
-            if (!useOnDevicePersonalizer) {
-                val personalModel = File(context.filesDir, "hey_toma_personal.onnx")
-                if (personalModel.exists()) {
-                    loadPersonalModel(personalModel.absolutePath)
-                } else {
-                    loadDefaultModel(context)
+                if (!useOnDevicePersonalizer) {
+                    val personalModel = File(context.filesDir, "hey_toma_personal.onnx")
+                    if (personalModel.exists()) {
+                        loadPersonalModel(personalModel.absolutePath)
+                    } else {
+                        loadDefaultModel(context)
+                    }
                 }
+
+                Log.d(TAG, "✅ 3-Stage ONNX Pipeline initialized")
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Model load failed: ${e.message}")
             }
-            
-            Log.d(TAG, "✅ 3-Stage ONNX Pipeline initialized")
-        } catch (e: Exception) {
-            Log.e(TAG, "❌ Model load failed: ${e.message}")
         }
     }
 
