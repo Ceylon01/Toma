@@ -1,3 +1,24 @@
+![TOMA](portfolio-banner.svg)
+
+<div align="center">
+<h3>텍스트·음성·사진·링크를 레시피와 조리 흐름으로 연결하는 Android 앱.</h3>
+<p>Kotlin · Jetpack Compose · Room · OpenAI API</p>
+<p><a href="https://app.notion.com/p/3b7694a2940281ebba01d45143ddacb9">프로젝트 스토리 ↗</a> · <a href="https://github.com/LibrumLego">개발자 포트폴리오 ↗</a></p>
+</div>
+
+---
+
+## At a glance
+
+| 제품 경험 | 구현 포인트 |
+| :--- | :--- |
+| 텍스트·음성·사진·링크를 레시피와 조리 흐름으로 연결하는 Android 앱. | 다양한 입력을 레시피 데이터로 정리하고, 저장·탐색·음성 안내를 하나의 흐름으로 연결합니다. |
+
+캡스톤 팀 프로젝트 · 개별 기여 범위는 프로젝트 상세의 근거와 함께 확인할 수 있습니다.
+
+<details>
+<summary><strong>기능 · 구조 · 로컬 실행 가이드</strong></summary>
+
 <div align="center">
   <img src="https://raw.githubusercontent.com/LibrumLego/Toma/main/app/src/main/res/drawable/ic_splash_full.png" alt="TOMA logo" width="180" />
   <h1>TOMA</h1>
@@ -94,3 +115,10 @@ NAVER_CLIENT_SECRET=your_naver_client_secret
 ## License
 
 개인 포트폴리오 및 캡스톤 프로젝트 용도로 관리합니다.
+
+
+</details>
+
+---
+
+<sub>Jimin Kook · LibrumLego / 프로젝트 설명과 실행 가이드는 저장소 기준으로 관리합니다.</sub>
